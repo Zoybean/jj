@@ -914,6 +914,10 @@
                     "type": "string",
                     "description": "`jj file list`'s output"
                 },
+                "file_list_untracked": {
+                    "type": "string",
+                    "description": "`jj file list-untracked`'s output"
+                },
                 "file_show": {
                     "type": "string",
                     "description": "`jj file show`'s output"

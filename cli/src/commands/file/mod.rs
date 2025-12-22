@@ -15,6 +15,7 @@
 mod annotate;
 mod chmod;
 mod list;
+mod list_untracked;
 mod search;
 mod show;
 mod track;
@@ -30,6 +31,7 @@ pub enum FileCommand {
     Annotate(annotate::FileAnnotateArgs),
     Chmod(chmod::FileChmodArgs),
     List(list::FileListArgs),
+    ListUntracked(list_untracked::FileListUntrackedArgs),
     Search(search::FileSearchArgs),
     Show(show::FileShowArgs),
     Track(track::FileTrackArgs),
@@ -45,6 +47,7 @@ pub fn cmd_file(
         FileCommand::Annotate(args) => annotate::cmd_file_annotate(ui, command, args),
         FileCommand::Chmod(args) => chmod::cmd_file_chmod(ui, command, args),
         FileCommand::List(args) => list::cmd_file_list(ui, command, args),
+        FileCommand::ListUntracked(args) => list_untracked::cmd_file_list_untracked(ui, command, args),
         FileCommand::Search(args) => search::cmd_file_search(ui, command, args),
         FileCommand::Show(args) => show::cmd_file_show(ui, command, args),
         FileCommand::Track(args) => track::cmd_file_track(ui, command, args),

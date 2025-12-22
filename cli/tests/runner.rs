@@ -34,6 +34,7 @@ mod test_evolog_command;
 mod test_file_annotate_command;
 mod test_file_chmod_command;
 mod test_file_list_command;
+mod test_file_list_untracked_command;
 mod test_file_search_command;
 mod test_file_show_command;
 mod test_file_track_untrack_commands;

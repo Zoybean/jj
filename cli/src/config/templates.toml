@@ -44,6 +44,7 @@ commit_trailers = ''
 evolog = 'builtin_evolog_compact'
 
 file_list = 'format_path(path) ++ "\n"'
+file_list_untracked = '"? " ++ self.display(true) ++ "\n"'
 file_show = ''
 
 git_push_bookmark = '"push-" ++ change_id.short()'

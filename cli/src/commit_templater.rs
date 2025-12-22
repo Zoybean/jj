@@ -42,6 +42,7 @@ use jj_lib::copies::CopiesTreeDiffEntryPath;
 use jj_lib::copies::CopyRecords;
 use jj_lib::evolution::CommitEvolutionEntry;
 use jj_lib::extensions_map::ExtensionsMap;
+use jj_lib::file_util;
 use jj_lib::fileset;
 use jj_lib::fileset::FilesetDiagnostics;
 use jj_lib::fileset::FilesetExpression;
@@ -2004,28 +2005,67 @@ fn builtin_repo_path_methods<'repo>() -> CommitTemplateBuildMethodFnMap<'repo, R
     let mut map = CommitTemplateBuildMethodFnMap::<RepoPathBuf>::new();
     map.insert(
         "absolute",
-        |language, _diagnostics, _build_ctx, self_property, function| {
-            function.expect_no_arguments()?;
+        |language, diagnostics, build_ctx, self_property, function| {
+            let ([], [dir_indicate_node]) = function.expect_arguments()?;
             let path_converter = language.path_converter;
+            let dir_indicate_property = dir_indicate_node
+                .map(|node| {
+                    template_builder::expect_boolean_expression(
+                        language,
+                        diagnostics,
+                        build_ctx,
+                        node,
+                    )
+                })
+                .transpose()?;
             // We handle the absolute path here instead of in a wrapper in
             // `RepoPathUiConverter` because absolute paths only make sense for
             // filesystem paths. Other cases should fail here.
-            let out_property = self_property.and_then(move |path| match path_converter {
-                RepoPathUiConverter::Fs { cwd: _, base } => path
-                    .to_fs_path(base)?
-                    .into_os_string()
-                    .into_string()
-                    .map_err(|_| TemplatePropertyError("Invalid UTF-8 sequence in path".into())),
-            });
+            let out_property =
+                (self_property, dir_indicate_property).and_then(move |(path, dir_indicate)| {
+                    match path_converter {
+                        RepoPathUiConverter::Fs { cwd: _, base } => {
+                            let mut fs = path.to_fs_path(base)?;
+                            if dir_indicate.unwrap_or(false) && fs.is_dir() {
+                                fs = fs.join("");
+                            }
+                            fs.into_os_string().into_string().map_err(|_| {
+                                TemplatePropertyError("Invalid UTF-8 sequence in path".into())
+                            })
+                        }
+                    }
+                });
             Ok(out_property.into_dyn_wrapped())
         },
     );
     map.insert(
         "display",
-        |language, _diagnostics, _build_ctx, self_property, function| {
-            function.expect_no_arguments()?;
+        |language, diagnostics, build_ctx, self_property, function| {
+            let ([], [dir_indicate_node]) = function.expect_arguments()?;
+            let dir_indicate_property = dir_indicate_node
+                .map(|node| {
+                    template_builder::expect_boolean_expression(
+                        language,
+                        diagnostics,
+                        build_ctx,
+                        node,
+                    )
+                })
+                .transpose()?;
             let path_converter = language.path_converter;
-            let out_property = self_property.map(|path| path_converter.format_file_path(&path));
+            let out_property =
+                (self_property, dir_indicate_property).and_then(move |(path, dir_indicate)| {
+                    match path_converter {
+                        RepoPathUiConverter::Fs { cwd, base } => {
+                            let mut rel =
+                                file_util::relative_path(cwd, &path.to_fs_path(base)?);
+                            if dir_indicate.unwrap_or(false) && rel.is_dir() {
+                                rel = rel.join("");
+                            }
+                            Ok(rel.display().to_string())
+                        }
+                    }
+                });
             Ok(out_property.into_dyn_wrapped())
         },
     );

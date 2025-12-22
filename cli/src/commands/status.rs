@@ -230,7 +230,7 @@ pub(crate) fn cmd_status(
     Ok(())
 }
 
-async fn visit_collapsed_untracked_files(
+pub async fn visit_collapsed_untracked_files(
     untracked_paths: impl IntoIterator<Item = impl AsRef<RepoPath>>,
     tree: MergedTree,
     mut on_path: impl FnMut(&RepoPath, bool) -> Result<(), CommandError>,
